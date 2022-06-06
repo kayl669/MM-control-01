@@ -39,15 +39,17 @@ static const uint16_t eepromEmpty = 0xffff; //!< EEPROM content when erased
 // 1 == 0,0495
 static const uint16_t eepromLengthCorrectionBase = 1975u; //!< legacy bowden length correction base (~98 mm)
 // ULTRA SHORT
-static const uint16_t eepromBowdenLenDefault = 1818u; //!< Default bowden length (~90 mm)
+//static const uint16_t eepromBowdenLenDefault = 1818u; //!< Default bowden length (~90 mm)
 // SHORT
 //static const uint16_t eepromBowdenLenDefault = 2020u; //!< Default bowden length (~100 mm)
 //CLASSIC
 //static const uint16_t eepromBowdenLenDefault = 2225u; //!< Default bowden length (~110 mm)
 //LONGER
 //static const uint16_t eepromBowdenLenDefault = 2500u; //!< Default bowden length (~123 mm)
-static const uint16_t eepromBowdenLenMinimum = 1725u; //!< Minimum bowden length (~85 mm)
-static const uint16_t eepromBowdenLenMaximum = 4000u; //!< Maximum bowden length (~198 mm)
+// VERY LONGER
+static const uint16_t eepromBowdenLenDefault = 3200u; //!< Default bowden length (~148 mm)
+static const uint16_t eepromBowdenLenMinimum = 3000u; //!< Minimum bowden length (~85 mm)
+static const uint16_t eepromBowdenLenMaximum = 6400u; //!< Maximum bowden length (~198 mm)
 
 void permanentStorageInit()
 {
