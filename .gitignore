@@ -16,3 +16,4 @@ Doc
 /build-env
 /MM-control-01/*.hex
 /MM-control-01/version.h
+/build
