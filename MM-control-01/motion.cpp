@@ -62,7 +62,7 @@ void motion_set_idler2(uint8_t idler)
             s_homed = true;
     }
     const uint8_t tries = 2;
-    for (uint8_t i = 0; i <= tries; ++i)
+    for (uint8_t tr = 0; tr <= tries; ++tr)
     {
         int idler_steps = get_idler_steps(s_idler, idler);
 
@@ -72,7 +72,10 @@ void motion_set_idler2(uint8_t idler)
         if (!tmc2130_read_gstat()) break;
         else
         {
-            if (tries == i) unrecoverable_error();
+            if (tries == tr) {
+                unrecoverable_error();
+                tr = 0;
+            }
             drive_error();
             rehome();
         }
@@ -82,12 +85,15 @@ void motion_set_idler2(uint8_t idler)
 static void check_idler_drive_error()
 {
     const uint8_t tries = 2;
-    for (uint8_t i = 0; i <= tries; ++i)
+    for (uint8_t tr = 0; tr <= tries; ++tr)
     {
         if (!tmc2130_read_gstat()) break;
         else
         {
-            if (tries == i) unrecoverable_error();
+            if (tries == tr) {
+                unrecoverable_error();
+                tr = 0;
+            }
             drive_error();
             rehome_idler();
         }
@@ -135,7 +141,7 @@ static void unload_to_finda()
         }
 
         delayMicroseconds(delay);
-        if (digitalRead(A1) == 0) _endstop_hit++;
+        if (!isFilamentPresent()) _endstop_hit++;
 
     }
 }
@@ -178,7 +184,10 @@ void motion_feed_to_bondtech()
         if (!tmc2130_read_gstat()) break;
         else
         {
-            if (tries == tr) unrecoverable_error();
+            if (tries == tr) {
+                unrecoverable_error();
+                tr = 0;
+            }
             drive_error();
             rehome_idler();
             unload_to_finda();
@@ -198,9 +207,12 @@ void motion_unload_to_finda()
     for (uint8_t tr = 0; tr <= tries; ++tr)
     {
         unload_to_finda();
-        if (tmc2130_read_gstat() && digitalRead(A1) == 1)
+        if (tmc2130_read_gstat() && isFilamentPresent())
         {
-            if (tries == tr) unrecoverable_error();
+            if (tries == tr) {
+                unrecoverable_error();
+                tr = 0;
+            }
             drive_error();
             rehome_idler();
         }
@@ -217,3 +229,6 @@ void motion_door_sensor_detected()
     s_has_door_sensor = true;
 }
 
+bool isFilamentPresent() {
+    return digitalRead(A1) == 0;
+}

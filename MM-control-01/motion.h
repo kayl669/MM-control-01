@@ -16,5 +16,6 @@ void motion_unload_to_finda();
 void motion_door_sensor_detected();
 void motion_set_idler(uint8_t idler);
 void rehome();
+bool isFilamentPresent();
 
 #endif //MOTION_H_

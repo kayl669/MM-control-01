@@ -72,7 +72,7 @@ bool feed_filament(bool timeout)
                 if (button_blanking <= button_blanking_limit) ++button_blanking;
             }
 
-            if (digitalRead(A1) == 1) ++finda_triggers;
+            if (isFilamentPresent()) ++finda_triggers;
             if (finda_triggers >= finda_limit)
             {
                 loaded = true;
@@ -210,7 +210,7 @@ void eject_filament(uint8_t filament)
 {
     active_extruder = filament;
 
-    if (isFilamentLoaded)  unload_filament_withSensor();
+    if (isFilamentPresent())  unload_filament_withSensor();
 
     tmc2130_init_axis(AX_PUL, tmc2130_mode);
 
@@ -257,7 +257,7 @@ static bool checkOk()
 
     // filament in FINDA, let's try to unload it
     set_pulley_dir_pull();
-    if (digitalRead(A1) == 1)
+    if (isFilamentPresent())
     {
         _steps = 3000;
         _endstop_hit = 0;
@@ -265,12 +265,12 @@ static bool checkOk()
         {
             do_pulley_step();
             delayMicroseconds(3000);
-            if (digitalRead(A1) == 0) _endstop_hit++;
+            if (!isFilamentPresent()) _endstop_hit++;
             _steps--;
         } while (_steps > 0 && _endstop_hit < 50);
     }
 
-    if (digitalRead(A1) == 0)
+    if (!isFilamentPresent())
     {
         // looks ok, load filament to FINDA
         set_pulley_dir_push();
@@ -281,7 +281,7 @@ static bool checkOk()
         {
             do_pulley_step();
             delayMicroseconds(3000);
-            if (digitalRead(A1) == 1) _endstop_hit++;
+            if (isFilamentPresent()) _endstop_hit++;
             _steps--;
         } while (_steps > 0 && _endstop_hit < 50);
 
@@ -351,19 +351,19 @@ void load_filament_withSensor(bool disengageIdler)
         do_pulley_step();
         _loadSteps++;
         delayMicroseconds(5500);
-    } while (digitalRead(A1) == 0 && _loadSteps < 1500);
+    } while (!isFilamentPresent() && _loadSteps < 1500);
 
 
     // filament did not arrived at FINDA, let's try to correct that
-    if (digitalRead(A1) == 0)
+    if (!isFilamentPresent())
     {
         for (int i = 6; i > 0; i--)
         {
-            if (digitalRead(A1) == 0)
+            if (!isFilamentPresent())
             {
                 // attempt to correct
                 set_pulley_dir_pull();
-                for (int i = 200; i >= 0; i--)
+                for (int j = 200; j >= 0; j--)
                 {
                     do_pulley_step();
                     delayMicroseconds(1500);
@@ -376,14 +376,14 @@ void load_filament_withSensor(bool disengageIdler)
                     do_pulley_step();
                     _loadSteps++;
                     delayMicroseconds(4000);
-                    if (digitalRead(A1) == 1) _endstop_hit++;
+                    if (isFilamentPresent()) _endstop_hit++;
                 } while (_endstop_hit<100 && _loadSteps < 500);
             }
         }
     }
 
     // still not at FINDA, error on loading, let's wait for user input
-    if (digitalRead(A1) == 0)
+    if (!isFilamentPresent())
     {
         bool _continue = false;
         bool _isOk = false;
@@ -447,7 +447,7 @@ void load_filament_withSensor(bool disengageIdler)
             do_pulley_step();
             _loadSteps++;
             delayMicroseconds(5500);
-        } while (digitalRead(A1) == 0 && _loadSteps < 1500);
+        } while (!isFilamentPresent() && _loadSteps < 1500);
         // ?
     }
     else
@@ -469,7 +469,7 @@ void unload_filament_withSensor()
 
     motion_engage_idler(); // if idler is in parked position un-park him get in contact with filament
 
-    if (digitalRead(A1))
+    if (isFilamentPresent())
     {
         motion_unload_to_finda();
     }
@@ -494,14 +494,14 @@ void unload_filament_withSensor()
 
 
     // FINDA is still sensing filament, let's try to unload it once again
-    if (digitalRead(A1) == 1)
+    if (isFilamentPresent())
     {
         for (int i = 6; i > 0; i--)
         {
-            if (digitalRead(A1) == 1)
+            if (isFilamentPresent())
             {
                 set_pulley_dir_push();
-                for (int i = 150; i > 0; i--)
+                for (int j = 150; j > 0; j--)
                 {
                     do_pulley_step();
                     delayMicroseconds(4000);
@@ -515,7 +515,7 @@ void unload_filament_withSensor()
                     do_pulley_step();
                     _steps--;
                     delayMicroseconds(3000);
-                    if (digitalRead(A1) == 0) _endstop_hit++;
+                    if (!isFilamentPresent()) _endstop_hit++;
                 } while (_endstop_hit < 100 && _steps > 0);
             }
             delay(100);
@@ -526,7 +526,7 @@ void unload_filament_withSensor()
 
 
     // error, wait for user input
-    if (digitalRead(A1) == 1)
+    if (isFilamentPresent())
     {
         bool _continue = false;
         bool _isOk = false;
