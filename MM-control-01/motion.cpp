@@ -108,19 +108,20 @@ void motion_disengage_idler()
     check_idler_drive_error();
 }
 
-//! @brief unload
-static void unload_to_splitter()
+//! @brief unload until FINDA senses end of the filament
+static void unload_to_finda()
 {
     int delay = 2000; //microstep period in microseconds
     const int _first_point = 1800;
 
+    uint8_t _endstop_hit = 0;
 
-    int _unloadSteps = BowdenLength::get();
+    int _unloadSteps = BowdenLength::get() + 1100;
     const int _second_point = _unloadSteps - 1300;
 
     set_pulley_dir_pull();
 
-    while (_unloadSteps > 0)
+    while (_endstop_hit < 100u && _unloadSteps > 0)
     {
         do_pulley_step();
         _unloadSteps--;
@@ -134,6 +135,7 @@ static void unload_to_splitter()
         }
 
         delayMicroseconds(delay);
+        if (digitalRead(A1) == 0) _endstop_hit++;
 
     }
 }
@@ -141,9 +143,7 @@ static void unload_to_splitter()
 void motion_feed_to_bondtech()
 {
     int stepPeriod = 4500; //microstep period in microseconds
-    uint16_t steps = BowdenLength::get();
-    // 1 == 0,0495
-    steps+=405; //20mm more
+    const uint16_t steps = BowdenLength::get();
 
     const uint8_t tries = 2;
     for (uint8_t tr = 0; tr <= tries; ++tr)
@@ -181,10 +181,12 @@ void motion_feed_to_bondtech()
             if (tries == tr) unrecoverable_error();
             drive_error();
             rehome_idler();
-            unload_to_splitter();
+            unload_to_finda();
         }
     }
 }
+
+
 
 
 //! @brief unload to FINDA
@@ -192,12 +194,22 @@ void motion_feed_to_bondtech()
 //! Check for drive error and try to recover 3 times.
 void motion_unload_to_finda()
 {
-        unload_to_splitter();
-        if (tmc2130_read_gstat())
+    const uint8_t tries = 2;
+    for (uint8_t tr = 0; tr <= tries; ++tr)
+    {
+        unload_to_finda();
+        if (tmc2130_read_gstat() && digitalRead(A1) == 1)
         {
+            if (tries == tr) unrecoverable_error();
             drive_error();
             rehome_idler();
         }
+        else
+        {
+            break;
+        }
+    }
+
 }
 
 void motion_door_sensor_detected()
